@@ -1,145 +1,92 @@
-const createConnect4Board = () => {
-  // Get the container element where the board will be placed
-  const gameBoard = document.getElementById("container");
+document.addEventListener("DOMContentLoaded", createConnect4Board);
 
-  // Create the board element and add a class for styling
+let array = Array(6).fill(null).map(() => Array(7).fill(null));
+
+let currentPlayer = 1;
+let playerOneColor = "red";
+let playerTwoColor = "yellow";
+let currentColor = playerOneColor;
+
+// ✅ Тоглоомын самбар үүсгэх
+function createConnect4Board() {
+  const gameBoard = document.getElementById("container");
+  gameBoard.innerHTML = ""; // clear old content if reloaded
+
   const board = document.createElement("div");
   board.classList.add("board");
   gameBoard.appendChild(board);
 
-  // Loop to create 42 slots (7 columns x 6 rows) for the Connect 4 grid
+  // 7 багана × 6 мөр = 42 slot
   for (let i = 0; i < 42; i++) {
-    const slot = document.createElement("div"); // Create a slot element
-    slot.classList.add("slot"); // Add a class for styling
-    slot.id = (i % 7) + "-" + Math.floor(i / 7); // Assign a unique ID in "column-row" format
-    slot.dataset.column = i % 7; // Add the column index as a dataset attribute
-    slot.dataset.row = Math.floor(i / 7); // Add the row index as a dataset attribute
-    board.appendChild(slot); // Add the slot to the board
+    const slot = document.createElement("div");
+    slot.classList.add("slot");
+    slot.dataset.column = i % 7;
+    slot.dataset.row = Math.floor(i / 7);
+    board.appendChild(slot);
   }
-  // creating reset button and display
+
+  // Reset button
   const resetButton = document.createElement("button");
-  resetButton.innerHTML = "Reset Game";
+  resetButton.textContent = "Reset Game";
   resetButton.classList.add("reset_button");
+  resetButton.addEventListener("click", resetGame);
 
-  // Create a container for the controls (player disc choices)
-  // Create the controls container
-  // Create the controls container
-  const controls = document.createElement("div");
-  controls.classList.add("controls"); // Add a class for styling
-
-  // Create and configure the red disc selection
-  // Create the red disc element and input
-  const redDisc = document.createElement("div");
-  redDisc.classList.add("redDisc"); // Add a class for styling
-  redDisc.style.display = "none"; // Hide the red disc element
-
-  const redInput = document.createElement("input"); // Create a radio input
-  redInput.type = "radio"; // Set type to radio
-  redInput.name = "discChoice"; // Set name for grouping radio buttons
-  redInput.id = "redDiscChoice"; // Assign an ID
-  redInput.checked = true; // Make red the default selected disc
-  redInput.style.display = "none"; // Hide the input element
-
-  // Create the yellow disc element and input
-  const yellowDisc = document.createElement("div");
-  yellowDisc.classList.add("yellowDisc"); // Add a class for styling
-  yellowDisc.style.display = "none"; // Hide the yellow disc element
-
-  const yellowInput = document.createElement("input"); // Create a radio input
-  yellowInput.type = "radio"; // Set type to radio
-  yellowInput.name = "discChoice"; // Group with red disc radio
-  yellowInput.id = "yellowDiscChoice"; // Assign an ID
-  yellowInput.style.display = "none"; // Hide the input element
-
-  // Create containers for each disc choice and append elements
-  const redContainer = document.createElement("div");
-  redContainer.appendChild(redDisc);
-  redContainer.appendChild(redInput);
-
-  const yellowContainer = document.createElement("div");
-  yellowContainer.appendChild(yellowDisc);
-  yellowContainer.appendChild(yellowInput);
-
-  // Append the red and yellow containers to the controls div
-  controls.appendChild(redContainer);
-  controls.appendChild(yellowContainer);
-
-  // Optionally, append the controls div to the body or another parent container
-  document.body.appendChild(controls);
-
-  // Append the disc choices to the controls section
-  controls.appendChild(redContainer);
-  controls.appendChild(yellowContainer);
-  gameBoard.appendChild(controls); // Add controls to the game board
-
-  // Add a status message (h3) below the board for displaying the current turn or winner
+  // Status харуулна
   const status = document.createElement("h3");
+  status.id = "status";
+  status.textContent = `Turn: Player ${currentPlayer} (${currentColor})`;
+
   gameBoard.appendChild(status);
   gameBoard.appendChild(resetButton);
-};
 
-document.addEventListener("DOMContentLoaded", createConnect4Board());
+  // Slot бүр дээр click event нэмэх
+  document.querySelectorAll(".slot").forEach((slot) => {
+    slot.addEventListener("click", onClick);
+  });
+}
 
-let array = [
-  [null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null],
-  [null, null, null, null, null, null, null],
-];
-
-let currentPlayer = 1;
-let currentPlayerName = "player one";
-let playerOne = "player one";
-let playerTwo = "player two";
-let playerOneColor = "red";
-let playerTwoColor = "yellow";
-
-let currentColor = playerOneColor;
-let islock = false;
-
-function toggleplayer() {
+// ✅ Тоглогч ээлжилж солих
+function togglePlayer() {
   currentPlayer = 3 - currentPlayer;
-  console.log(`player ${currentPlayer}`);
-if(currentPlayer==1){
-  currentColor="yellow"
-}else {
-    currentPlayer="red"
-}
-}
-const waitForAnimation = (duration) => {
-    return new Promise((resolve) => setTimeout(resolve, duration))
+  currentColor = currentPlayer === 1 ? playerOneColor : playerTwoColor;
+
+  const status = document.getElementById("status");
+  status.textContent = `Turn: Player ${currentPlayer} (${currentColor})`;
 }
 
+// ✅ Click event
 function onClick(event) {
-  console.log(event);
-  const slot = event.target;
-  console.log(slot);
-  console.log(slot.dataset.column);
-  const columnIndex = parseInt(slot.dataset.column);
-  console.log("this is column index", columnIndex);
+  const columnIndex = parseInt(event.target.dataset.column);
+
+  // Багана дахь хамгийн доод мөрийг олно
   const column = array.map((row) => row[columnIndex]);
-  console.log("this is column", column);
   const rowIndex = column.lastIndexOf(null);
-  
 
+  // Хэрвээ багана дүүрсэн бол юу ч хийхгүй
+  if (rowIndex === -1) return;
+
+  // Array update
   array[rowIndex][columnIndex] = currentPlayer;
-  const disc = document.createElement("div");
-  disc.classList.add("disc", `${currentColor}Disc`);
 
+  // DOM update
   const targetSlot = document.querySelector(
     `.slot[data-column="${columnIndex}"][data-row="${rowIndex}"]`
   );
-
-  console.log("this is target slot", targetSlot);
-
   targetSlot.classList.add(currentColor);
 
-  toggleplayer();
+  togglePlayer();
 }
-  document.querySelectorAll(".slot").forEach((slot) => {
-    slot.addEventListener("click", onClick);
-    console.log("slot is spiked");
-  });
 
+// ✅ Reset Game
+function resetGame() {
+  array = Array(6).fill(null).map(() => Array(7).fill(null));
+  currentPlayer = 1;
+  currentColor = playerOneColor;
+
+  const status = document.getElementById("status");
+  status.textContent = `Turn: Player ${currentPlayer} (${currentColor})`;
+
+  document.querySelectorAll(".slot").forEach((slot) => {
+    slot.classList.remove("red", "yellow");
+  });
+}
